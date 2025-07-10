@@ -19,7 +19,7 @@ services:
     environment:
       # Configuration pour se connecter au cluster Galera
       # Vous pouvez utiliser n'importe quel nœud ou un load balancer
-      DB_HOST: galera1  # ou galera2, galera3
+      DB_HOST: galera-lb
       DB_PORT: 3306
       DB_USER: root
       DB_PASSWORD: galerapass
@@ -120,7 +120,12 @@ services:
     networks:
       - dbnet
     depends_on:
-      - galera1
+      galera1:
+        condition: service_healthy
+      galera2:
+        condition: service_healthy
+      galera3:
+        condition: service_healthy
 
   # Load balancer optionnel avec HAProxy
   galera-lb:
