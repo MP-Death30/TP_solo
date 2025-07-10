@@ -1,0 +1,149 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      galera1:
+        condition: service_healthy
+      galera2:
+        condition: service_healthy
+      galera3:
+        condition: service_healthy
+    networks:
+      - dbnet
+    environment:
+      # Configuration pour se connecter au cluster Galera
+      # Vous pouvez utiliser n'importe quel nœud ou un load balancer
+      DB_HOST: galera1  # ou galera2, galera3
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: galerapass
+      DB_NAME: events_db
+
+  # ──────────────────────────
+  # MariaDB-Galera (3 nœuds)
+  # ──────────────────────────
+  # Nœud 1 — BOOTSTRAP
+  galera1:
+    image: bitnami/mariadb-galera:latest
+    container_name: galera1
+    restart: unless-stopped
+    environment:
+      MARIADB_GALERA_CLUSTER_NAME: my_galera
+      MARIADB_GALERA_CLUSTER_ADDRESS: gcomm://          # vide = bootstrap
+      MARIADB_GALERA_CLUSTER_BOOTSTRAP: "yes"
+      MARIADB_GALERA_ENABLE: "true"
+      MARIADB_ROOT_PASSWORD: galerapass
+      MARIADB_ROOT_HOST: '%'
+      MARIADB_GALERA_MARIABACKUP_USER: backup
+      MARIADB_GALERA_MARIABACKUP_PASSWORD: backuppass
+      MARIADB_GALERA_FORCE_SAFETOBOOTSTRAP: "yes"
+      MARIADB_DATABASE: events_db  # Création de votre base de données
+    volumes:
+      - galera1_data:/bitnami/mariadb
+    networks:
+      - dbnet
+    ports:
+      - "3306:3306"  # Exposé pour accès externe si nécessaire
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p$$MARIADB_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nœud 2
+  galera2:
+    image: bitnami/mariadb-galera:latest
+    container_name: galera2
+    restart: unless-stopped
+    depends_on:
+      galera1:
+        condition: service_healthy
+    environment:
+      MARIADB_GALERA_CLUSTER_NAME: my_galera
+      MARIADB_GALERA_CLUSTER_ADDRESS: gcomm://galera1,galera2,galera3
+      MARIADB_GALERA_ENABLE: "true"
+      MARIADB_ROOT_PASSWORD: galerapass
+      MARIADB_ROOT_HOST: '%'
+      MARIADB_GALERA_MARIABACKUP_USER: backup
+      MARIADB_GALERA_MARIABACKUP_PASSWORD: backuppass
+    volumes:
+      - galera2_data:/bitnami/mariadb
+    networks:
+      - dbnet
+    ports:
+      - "3307:3306"  # Port différent pour éviter les conflits
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p$$MARIADB_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nœud 3
+  galera3:
+    image: bitnami/mariadb-galera:latest
+    container_name: galera3
+    restart: unless-stopped
+    depends_on:
+      galera1:
+        condition: service_healthy
+    environment:
+      MARIADB_GALERA_CLUSTER_NAME: my_galera
+      MARIADB_GALERA_CLUSTER_ADDRESS: gcomm://galera1,galera2,galera3
+      MARIADB_GALERA_ENABLE: "true"
+      MARIADB_ROOT_PASSWORD: galerapass
+      MARIADB_ROOT_HOST: '%'
+      MARIADB_GALERA_MARIABACKUP_USER: backup
+      MARIADB_GALERA_MARIABACKUP_PASSWORD: backuppass
+    volumes:
+      - galera3_data:/bitnami/mariadb
+    networks:
+      - dbnet
+    ports:
+      - "3308:3306"  # Port différent pour éviter les conflits
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p$$MARIADB_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Adminer pour l'administration
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - dbnet
+    depends_on:
+      - galera1
+
+  # Load balancer optionnel avec HAProxy
+  galera-lb:
+    image: haproxy:2.4
+    container_name: galera-lb
+    ports:
+      - "3309:3306"  # Port du load balancer
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - galera1
+      - galera2
+      - galera3
+    networks:
+      - dbnet
+
+# Volumes pour la persistance des données
+volumes:
+  galera1_data:
+  galera2_data:
+  galera3_data:
+
+# Réseau pour la communication entre services
+networks:
+  dbnet:
+    driver: bridge
