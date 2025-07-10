@@ -5,3 +5,6 @@ sqlalchemy
 pymysql
 jinja2
 python-multipart
+pytest
+pytest-mock
+httpx
