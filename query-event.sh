@@ -7,5 +7,3 @@ docker exec -it galera1 mysql -uroot -pgalerapass -e "USE events_db; SELECT * FR
 # Exécute la requête SQL sur galera2
 echo "== galera2 =="
 docker exec -it galera2 mysql -uroot -pgalerapass -e "USE events_db; SELECT * FROM events;"
-
-echo "Fini"
