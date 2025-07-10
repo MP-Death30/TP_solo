@@ -1,5 +1,5 @@
 # ===== app/interfaces/api/endpoints/admin.py =====
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.application.use_cases.get_events import get_all_events
 
 router = APIRouter()

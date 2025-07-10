@@ -21,16 +21,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Inclure les routes API
 app.include_router(router)
 
-# Serve frontend
-frontend_path = os.path.join(os.path.dirname(__file__), "../frontend")
+# Configuration du frontend - chemin corrigé
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+frontend_path = os.path.abspath(frontend_path)
+
+print(f"Frontend path: {frontend_path}")
+print(f"Frontend exists: {os.path.exists(frontend_path)}")
+
+# Servir les fichiers statiques
 if os.path.exists(frontend_path):
     app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 
 @app.get("/")
 def read_index():
     frontend_file = os.path.join(frontend_path, "index.html")
+    print(f"Looking for index.html at: {frontend_file}")
+    print(f"Index file exists: {os.path.exists(frontend_file)}")
+    
     if os.path.exists(frontend_file):
         return FileResponse(frontend_file)
     return {"message": "Event Booking API is running", "endpoints": ["/events", "/reservations", "/admin"]}
@@ -38,6 +48,9 @@ def read_index():
 @app.get("/organisateur")
 def read_organisateur():
     frontend_file = os.path.join(frontend_path, "organisateur.html")
+    print(f"Looking for organisateur.html at: {frontend_file}")
+    print(f"Organisateur file exists: {os.path.exists(frontend_file)}")
+    
     if os.path.exists(frontend_file):
         return FileResponse(frontend_file)
     return {"message": "Organisateur page not found"}
