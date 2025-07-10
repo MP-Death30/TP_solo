@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+# ===== app/infrastructure/db/models.py =====
+from sqlalchemy import Column, Integer, String, Float
 from .database import Base
 
 class Event(Base):
@@ -8,6 +9,7 @@ class Event(Base):
     title = Column(String(255), nullable=False)
     description = Column(String(1000))
     location = Column(String(255))
-    date = Column(String(50))  # ou DateTime si vous voulez un vrai datetime
+    date = Column(String(50))
     price = Column(Float)
     capacity = Column(Integer)
+    reservations = Column(Integer, default=0)

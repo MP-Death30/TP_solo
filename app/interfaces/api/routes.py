@@ -1,4 +1,4 @@
-## event_booking_app/app/interfaces/api/routes.py
+# ===== app/interfaces/api/routes.py =====
 from fastapi import APIRouter
 from app.interfaces.api.endpoints import events, reservations, admin
 
