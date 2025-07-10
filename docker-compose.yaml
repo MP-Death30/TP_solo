@@ -46,6 +46,8 @@ services:
       MARIADB_DATABASE: events_db  # Création de votre base de données
     volumes:
       - galera1_data:/bitnami/mariadb
+      - ./init-haproxy.sql:/docker-entrypoint-initdb.d/init-haproxy.sql:ro
+
     networks:
       - dbnet
     ports:
@@ -74,6 +76,8 @@ services:
       MARIADB_GALERA_MARIABACKUP_PASSWORD: backuppass
     volumes:
       - galera2_data:/bitnami/mariadb
+      - ./init-haproxy.sql:/docker-entrypoint-initdb.d/init-haproxy.sql:ro
+
     networks:
       - dbnet
     ports:
@@ -102,6 +106,8 @@ services:
       MARIADB_GALERA_MARIABACKUP_PASSWORD: backuppass
     volumes:
       - galera3_data:/bitnami/mariadb
+      - ./init-haproxy.sql:/docker-entrypoint-initdb.d/init-haproxy.sql:ro
+
     networks:
       - dbnet
     ports:
